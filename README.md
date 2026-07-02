@@ -1,9 +1,9 @@
 # Networking-from-scratch
-A documented journey building a virtual networking lab from scratch using KVM/virt-manager covering subnets, static routing, firewalls, VPNs, and IDS.
+A documented journey building a virtual networking lab from scratch using KVM/virt-manager, covering subnets, static routing, firewalls, VPNs, and IDS.
 
 > Hands-on networking lab built with KVM and Linux. No GUIs, no shortcuts — just real config, real errors, and real fixes documented step by step.
 
-Built on **Pop!_OS** using **KVM/virt-manager** and **Ubuntu Server 22.04** VMs. The goal is to go from zero networking knowledge to being able to build, segment, secure, and monitor a small network — entirely from the command line.
+Built on **Pop!_OS** using **KVM/virt-manager** and **Ubuntu Server 22.04** VMs. The goal is to go from zero networking knowledge to being able to build, segment, secure, and monitor a small network entirely from the command line.
 
 ---
 
@@ -83,7 +83,7 @@ Built on **Pop!_OS** using **KVM/virt-manager** and **Ubuntu Server 22.04** VMs.
 
 **Cloning a VM copies more than the disk.** hostname, machine-id, and SSH host keys all come along. Always regenerate all three after cloning.
 
-**"Destination host unreachable" is ARP-level.** The packet never left the local network  the OS couldn't resolve the MAC address of the target. Usually means the target is offline or on the wrong network.
+**"Destination host unreachable" is ARP-level.** The packet never left the local network — the OS couldn't resolve the MAC address of the target. Usually means the target is offline or on the wrong network.
 
 **Subnets can't talk without a router.** Moving a device to a different /24 and watching pings immediately fail is the fastest way to make subnetting concrete.
 
@@ -103,4 +103,4 @@ Built on **Pop!_OS** using **KVM/virt-manager** and **Ubuntu Server 22.04** VMs.
 
 ## Why this exists
 
-Most networking tutorials either use pre-built appliances (pfSense, GNS3 with Cisco images) or skip straight to the interesting security stuff without explaining why the network underneath works. This repo documents building everything from scratch including every error and why it happened  so the concepts actually stick.
+Most networking tutorials either use pre-built appliances (pfSense, GNS3 with Cisco images) or skip straight to the interesting security stuff without explaining why the network underneath works. This repo documents building everything from scratch, including every error and why it happened, so the concepts actually stick.

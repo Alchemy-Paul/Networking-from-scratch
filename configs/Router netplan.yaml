@@ -1,0 +1,11 @@
+# /etc/netplan/50-cloud-init.yaml — router
+# enp1s0 on labnet, enp7s0 on labnet2
+# Acts as gateway for both subnets
+
+network:
+  version: 2
+  ethernets:
+    enp1s0:
+      addresses: [192.168.50.254/24]
+    enp7s0:
+      addresses: [192.168.51.254/24]

@@ -83,7 +83,7 @@ Built on **Pop!_OS** using **KVM/virt-manager** and **Ubuntu Server 22.04** VMs.
 
 **Bugs hit and fixed:**
 - tshark feedback loop over SSH (CPU spike, 80,000+ packets) — fixed with `-f` capture filter
-- Route disappearing after reboot — cloud-init disable file had gone missing, recreated it
+- Route disappearing after reboot — cloud-init disable file had gone missing, recreated it.
 
 ---
 

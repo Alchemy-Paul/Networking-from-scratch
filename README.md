@@ -74,6 +74,19 @@ Built on **Pop!_OS** using **KVM/virt-manager** and **Ubuntu Server 22.04** VMs.
 
 ---
 
+### ✅ Project 3 — Packet Capture and Traffic Analysis
+- Installed tshark on node-A and router
+- Captured and analyzed ICMP (ping) traffic — read TTL, sequence numbers, request/reply pairs
+- Captured ARP resolution — broadcast MAC, who asks, who answers, timing relative to ping
+- Captured TCP three-way handshake — SYN, SYN-ACK, ACK before SSH encryption kicks in
+- Captured cross-subnet forwarding on both router interfaces simultaneously — TTL decrement proves routing
+
+**Bugs hit and fixed:**
+- tshark feedback loop over SSH (CPU spike, 80,000+ packets) — fixed with `-f` capture filter
+- Route disappearing after reboot — cloud-init disable file had gone missing, recreated it
+
+---
+
 ### 📋 Upcoming Projects
 - **Project 3** — Wireshark packet capture: analyze DNS, TCP handshake, and ICMP traffic
 - **Project 4** — pfSense/OPNsense firewall with custom rules

@@ -18,7 +18,7 @@ communicate.
 ## Setup
 
 ### Install tshark on node-A and router
-Since labnet is isolated (no internet), temporarily add a NAT NIC to each VM:
+Since labnet is isolated (no internet), temporarily add a NAT NIC to each VM if you need package installs or SSH access during setup:
 - Shut down VM → Add Hardware → Network → `default` (NAT) → Boot up
 - Run `sudo dhclient <new-interface>` to get a DHCP IP
 - Install tshark:
@@ -29,6 +29,13 @@ sudo apt install tshark -y
 ```
 
 Remove the NAT NIC after installation if desired (or keep for SSH access).
+
+### Verify the interface names first
+The examples below assume `enp1s0` and `enp7s0`, but interface names can differ on your host or VM image. Confirm them before starting a capture:
+```bash
+ip -br addr
+```
+Use the interface that carries the lab subnet for your current VM. On the router, one NIC is usually `enp1s0` for `labnet` and the second is `enp7s0` for `labnet2`.
 
 ### Key tshark flags
 ```bash

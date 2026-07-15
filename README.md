@@ -88,7 +88,6 @@ Built on **Pop!_OS** using **KVM/virt-manager** and **Ubuntu Server 22.04** VMs.
 ---
 
 ### 📋 Upcoming Projects
-- **Project 3** — Wireshark packet capture: analyze DNS, TCP handshake, and ICMP traffic
 - **Project 4** — pfSense/OPNsense firewall with custom rules
 - **Project 5** — WireGuard VPN tunnel between VMs
 - **Project 6** — VLANs and network segmentation
@@ -122,6 +121,7 @@ Built on **Pop!_OS** using **KVM/virt-manager** and **Ubuntu Server 22.04** VMs.
 ```
 /01-basic-vm-lab/       notes and configs for Project 1
 /02-router-setup/       notes and configs for Project 2
+/03-packet-capture/     notes and capture walkthroughs for Project 3
 /configs/               reusable netplan, sysctl, cloud-init snippets
 ```
 

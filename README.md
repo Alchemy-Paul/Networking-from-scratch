@@ -2,7 +2,7 @@
 
 > Hands-on networking lab built with KVM and Linux. No GUIs, no shortcuts — just real config, real errors, and real fixes documented step by step.
 
-Built on **Pop!_OS** using **KVM/virt-manager** and **Ubuntu Server 22.04** VMs. The goal is to go from zero networking knowledge to being able to build, segment, secure, and monitor a small network — entirely from the command line.
+Built on **Pop!_OS** using **KVM/virt-manager** and **Ubuntu Server 22.04** VMs. The goal is to go from zero networking knowledge to being able to build, segment, secure, and monitor a small network  entirely from the command line.
 
 ---
 
@@ -52,16 +52,16 @@ host (Pop!_OS)
 - Verified connectivity with `ping` and `ssh` between the two nodes
 
 **Bugs hit and fixed:**
-- cloud-init silently reverting static IP on every reboot — fixed by creating `/etc/cloud/cloud.cfg.d/99-disable-network-config.cfg`
-- Cloned VM sharing hostname, machine-id, and SSH host keys with the original — regenerated all three
+- cloud-init silently reverting static IP on every reboot fixed by creating `/etc/cloud/cloud.cfg.d/99-disable-network-config.cfg`
+- Cloned VM sharing hostname, machine-id, and SSH host keys with the original  regenerated all three
 - "Destination host unreachable" traced back to VM being powered off (ARP-level failure)
-- NIC link state toggled off at the hypervisor level — invisible from inside the guest OS
+- NIC link state toggled off at the hypervisor level invisible from inside the guest OS
 - Netplan YAML rejected for inconsistent indentation (tabs vs spaces mixed by nano)
 
 ---
 
 ### ✅ Project 2 — Linux Router
-- Created `router` VM with two NICs — one on each subnet
+- Created `router` VM with two NICs one on each subnet
 - Configured `enp1s0` as `192.168.50.254/24` (gateway for labnet)
 - Configured `enp7s0` as `192.168.51.254/24` (gateway for labnet2)
 - Enabled IP forwarding: `net.ipv4.ip_forward=1` via `/etc/sysctl.d/99-ipforward.conf`
@@ -71,7 +71,7 @@ host (Pop!_OS)
 - Confirmed with `tcpdump` on both router NICs that packets traverse the router
 
 **Bugs hit and fixed:**
-- Host bridge interfaces (`virbr1`/`virbr2`) owned `192.168.50.1` and `192.168.51.1` — same IPs originally assigned to the router VM. Host intercepted packets and returned "Destination Port Unreachable." Fixed by using `.254` for router addresses
+- Host bridge interfaces (`virbr1`/`virbr2`) owned `192.168.50.1` and `192.168.51.1` same IPs originally assigned to the router VM. Host intercepted packets and returned "Destination Port Unreachable." Fixed by using `.254` for router addresses
 - Conflicting default routes on node-B caused replies to go out the wrong interface
 - Temporary NAT NIC needed on each VM for SSH/paste access during config
 
@@ -79,9 +79,9 @@ host (Pop!_OS)
 
 ### ✅ Project 3 — Packet Capture and Traffic Analysis
 - Installed tshark on node-A and router
-- Captured and analyzed ICMP (ping) traffic — TTL, sequence numbers, request/reply pairs
-- Captured ARP resolution — broadcast MAC, who asks, who answers, timing relative to ping
-- Captured TCP three-way handshake — SYN, SYN-ACK, ACK before SSH encryption kicks in
+- Captured and analyzed ICMP (ping) traffic TTL, sequence numbers, request/reply pairs
+- Captured ARP resolution broadcast MAC, who asks, who answers, timing relative to ping
+- Captured TCP three-way handshake SYN, SYN-ACK, ACK before SSH encryption kicks in
 - Captured cross-subnet forwarding on both router interfaces simultaneously — TTL decrement proves routing
 
 **Bugs hit and fixed:**

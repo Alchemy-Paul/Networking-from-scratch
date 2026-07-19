@@ -12,7 +12,7 @@ host (Pop!_OS)
       │
       │ SSH tunnel (localhost:8443 → 192.168.50.2:443)
       │
-   OPNsense 26.1.6_2
+   OPNsense 26.1.6
    ├── WAN (vtnet1) → 192.168.122.134/24 (default NAT, simulated internet)
    ├── LAN (vtnet0) → 192.168.50.2/24    (labnet)
    └── OPT1 (vtnet2) → 192.168.51.2/24  (labnet2)
@@ -62,8 +62,7 @@ libvirt assigns itself .1 on every virtual bridge (virbr1 owns 192.168.50.1).
 The host intercepts packets to .1 before they reach the VM. Use .2 or .254.
 
 ### 4. Access the web GUI via SSH tunnel
-OPNsense GUI only listens on LAN by default. Since the host cannot reach LAN
-directly (host bridge intercepts .1), use an SSH tunnel through node-A:
+The OPNsense web GUI only listens on the LAN interface by default. Because the host cannot reach the LAN subnet directly when libvirt's bridge owns the .1 address, use an SSH tunnel through node-A:
 
 ```bash
 # Run on host machine (not inside any VM)
@@ -117,10 +116,10 @@ Apply on both: sudo netplan apply
 ## Firewall Rules
 
 ### How OPNsense rules work
-- Rules are evaluated top to bottom, first match wins
+- Rules are evaluated top to bottom; the first match wins
 - Everything not explicitly matched is blocked by default
-- Rules are per interface — traffic from labnet2 hits OPT1 rules, not LAN rules
-- Direction matters — same two hosts, opposite directions = different rules
+- Rules are applied per interface — traffic from labnet2 hits OPT1 rules, not LAN rules
+- Direction matters — the same two hosts can have different outcomes depending on which way traffic flows
 
 ### Rule 1: Block node-B ping to node-A
 Interface: OPT1 | Action: Block | Protocol: ICMP
@@ -195,7 +194,7 @@ security posture — allowlist, not blocklist.
 
 ---
 
-## Bugs Hit and Fixed
+## Bugs Encountered and Fixed
 
 ### NIC assignment backwards
 Symptom: WAN had no IP, LAN was on NAT network

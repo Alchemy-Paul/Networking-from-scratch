@@ -12,8 +12,10 @@ Built on **Pop!_OS** using **KVM/virt-manager** and **Ubuntu Server 22.04** VMs.
 |---|---|
 | KVM / QEMU | Hypervisor |
 | virt-manager | VM management |
-| Ubuntu Server 22.04 | Guest OS on all VMs |
+| Ubuntu Server 22.04 | Guest OS on node VMs |
+| OPNsense 26.1.6 | Firewall / Router |
 | netplan | Network configuration |
+| tshark | Packet capture and analysis |
 | virsh | CLI VM management |
 
 ---
@@ -21,21 +23,23 @@ Built on **Pop!_OS** using **KVM/virt-manager** and **Ubuntu Server 22.04** VMs.
 ## Lab Topology (current)
 
 ```
-                        host — Pop!_OS
-                              │
-                           router
-                          /       \
-               enp1s0              enp7s0
-          192.168.50.254          192.168.51.254
-                │                       │
-    labnet (192.168.50.0/24)    labnet2 (192.168.51.0/24)
-    └── node-A  192.168.50.10   └── node-B  192.168.51.10
+host (Pop!_OS)
+      │
+      │ SSH tunnel (localhost:8443 → 192.168.50.2:443)
+      │
+   OPNsense
+   ├── WAN (vtnet1) → 192.168.122.134/24 (simulated internet via NAT)
+   ├── LAN (vtnet0) → 192.168.50.2/24
+   └── OPT1 (vtnet2) → 192.168.51.2/24
+          │                      │
+   labnet (192.168.50.0/24)    labnet2 (192.168.51.0/24)
+   └── node-A  192.168.50.10   └── node-B  192.168.51.10
 ```
 
 - **labnet** (`virbr1`) — isolated virtual network, no DHCP, no internet
 - **labnet2** (`virbr2`) — isolated virtual network, no DHCP, no internet
-- **router** — Ubuntu Server VM with two NICs, IP forwarding enabled, no NAT
-- Traffic between node-A and node-B flows exclusively through the router
+- **OPNsense** — firewall + router, all inter-subnet traffic passes through it
+- Linux router VM still exists but is no longer in the active traffic path
 
 ---
 
@@ -67,31 +71,50 @@ Built on **Pop!_OS** using **KVM/virt-manager** and **Ubuntu Server 22.04** VMs.
 - Confirmed with `tcpdump` on both router NICs that packets traverse the router
 
 **Bugs hit and fixed:**
-- Host bridge interfaces (`virbr1`/`virbr2`) owned `192.168.50.1` and `192.168.51.1` — same IPs originally assigned to the router VM. The host was intercepting packets before they reached the router and returning "Destination Port Unreachable." Fixed by using `.254` for router addresses instead of `.1`
-- Conflicting default routes on node-B caused replies to go out the wrong interface — removed the extra default route pointing to the NAT NIC
-- `domifaddr` returning blank — qemu-guest-agent not installed, used `ip addr show` inside the VM instead
-- Temporary NAT NIC needed on each VM for SSH/paste access during config — removed after setup was complete
+- Host bridge interfaces (`virbr1`/`virbr2`) owned `192.168.50.1` and `192.168.51.1` — same IPs originally assigned to the router VM. Host intercepted packets and returned "Destination Port Unreachable." Fixed by using `.254` for router addresses
+- Conflicting default routes on node-B caused replies to go out the wrong interface
+- Temporary NAT NIC needed on each VM for SSH/paste access during config
 
 ---
 
 ### ✅ Project 3 — Packet Capture and Traffic Analysis
 - Installed tshark on node-A and router
-- Captured and analyzed ICMP (ping) traffic — read TTL, sequence numbers, request/reply pairs
+- Captured and analyzed ICMP (ping) traffic — TTL, sequence numbers, request/reply pairs
 - Captured ARP resolution — broadcast MAC, who asks, who answers, timing relative to ping
 - Captured TCP three-way handshake — SYN, SYN-ACK, ACK before SSH encryption kicks in
 - Captured cross-subnet forwarding on both router interfaces simultaneously — TTL decrement proves routing
 
 **Bugs hit and fixed:**
 - tshark feedback loop over SSH (CPU spike, 80,000+ packets) — fixed with `-f` capture filter
-- Route disappearing after reboot — cloud-init disable file had gone missing, recreated it.
+- Route disappearing after reboot — cloud-init disable file had gone missing, recreated it
+
+---
+
+### ✅ Project 4 — Firewall with OPNsense
+- Installed OPNsense 26.1.6 as a VM with three NICs (WAN, LAN, OPT1)
+- Configured LAN on labnet (`192.168.50.2`) and OPT1 on labnet2 (`192.168.51.2`)
+- Routed all inter-subnet traffic through OPNsense, retiring the Linux router
+- Accessed web GUI via SSH tunnel through node-A (`ssh -L 8443:192.168.50.2:443 node@192.168.50.10`)
+- Wrote and tested three custom firewall rules with logging enabled:
+  - Block node-B ICMP → node-A (OPT1 interface)
+  - Allow node-A ICMP → node-B (LAN interface)
+  - Block node-B SSH → node-A (OPT1 interface, port 22)
+- Verified all rules in Firewall → Log Files → Live View in real time
+- Proved direction matters — same two hosts, opposite directions, different outcomes
+
+**Bugs hit and fixed:**
+- NICs assigned backwards by OPNsense — WAN ended up on labnet, LAN on NAT. Fixed by swapping network sources in virt-manager hardware details
+- Host bridge (`virbr1`) owns `192.168.50.1` — GUI inaccessible at that IP. Fixed by using `192.168.50.2` for OPNsense LAN
+- GUI inaccessible from WAN side even with firewall rule — OPNsense web server only listens on LAN. Fixed with SSH tunnel
+- Block rule on LAN had no effect on node-B traffic — node-B enters on OPT1, not LAN. Moved rule to correct interface
+- Traffic bypassing OPNsense entirely — node routes still pointed to Linux router. Updated netplan on both nodes
 
 ---
 
 ### 📋 Upcoming Projects
-- **Project 4** — pfSense/OPNsense firewall with custom rules
 - **Project 5** — WireGuard VPN tunnel between VMs
 - **Project 6** — VLANs and network segmentation
-- **Project 7** — IDS with Snort or Suricata
+- **Project 7** — IDS with Suricata
 - **Project 8** — Centralized logging with ELK stack or Security Onion
 
 ---
@@ -106,13 +129,17 @@ Built on **Pop!_OS** using **KVM/virt-manager** and **Ubuntu Server 22.04** VMs.
 
 **Subnets can't talk without a router.** Moving a device to a different /24 and watching pings immediately fail is the fastest way to make subnetting concrete.
 
-**The host bridge owns .1.** libvirt assigns itself the `.1` address on every virtual bridge it creates. If your router VM uses `.1`, the host intercepts packets destined for it — use `.254` or any other address instead.
+**The host bridge owns .1.** libvirt assigns itself the `.1` address on every virtual bridge it creates. If your firewall or router VM uses `.1`, the host intercepts packets destined for it — use `.2` or `.254` instead.
 
-**Two default routes break routing.** When a VM has two NICs on different networks, Linux may install two default routes. Only one can win — the other silently drops traffic going the wrong way. Always check `ip route show` after adding a NIC.
+**Two default routes break routing.** When a VM has two NICs on different networks, Linux may install two default routes. Only one can win — the other silently drops traffic. Always check `ip route show` after adding a NIC.
 
 **tcpdump is the fastest way to find where packets die.** Run it on each interface in the path simultaneously — the first interface where packets stop appearing is where the problem is.
 
-**virsh console gives you paste support.** The virt-manager graphical console doesn't support clipboard paste for server VMs. Use `sudo virsh -c qemu:///system console <vm>` from your host terminal, or add a temporary NAT NIC for SSH access.
+**Firewall rules are per interface, not per network.** A rule on LAN won't affect traffic arriving on OPT1, even if the destination is the same. Always think about which interface traffic enters the firewall on.
+
+**Rule order matters.** Firewalls evaluate rules top to bottom, first match wins. A block rule below an allow-all rule will never fire.
+
+**Two routers on the same network means one is being bypassed.** If you have a Linux router and OPNsense both on labnet, traffic will use whichever one the routes point to — the other's rules are invisible. Always verify the actual traffic path with tcpdump or firewall logs.
 
 ---
 
@@ -121,7 +148,8 @@ Built on **Pop!_OS** using **KVM/virt-manager** and **Ubuntu Server 22.04** VMs.
 ```
 /01-basic-vm-lab/       notes and configs for Project 1
 /02-router-setup/       notes and configs for Project 2
-/03-packet-capture/     notes and capture walkthroughs for Project 3
+/03-packet-capture/     notes and configs for Project 3
+/04-opnsense-firewall/  notes and configs for Project 4
 /configs/               reusable netplan, sysctl, cloud-init snippets
 ```
 
